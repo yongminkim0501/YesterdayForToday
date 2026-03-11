@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { Subscriber } from './entities/subscriber.entity';
 import { Post } from './entities/post.entity';
 import { Newsletter } from './entities/newsletter.entity';
@@ -11,10 +12,12 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 import { SeedModule } from './seed/seed.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
       database: process.env.DB_PATH || './data/database.sqlite',
@@ -27,6 +30,7 @@ import { SeedModule } from './seed/seed.module';
     AuthModule,
     EmailModule,
     SeedModule,
+    SchedulerModule,
   ],
 })
 export class AppModule {}
