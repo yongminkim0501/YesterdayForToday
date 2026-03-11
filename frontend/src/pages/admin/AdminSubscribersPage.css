@@ -1,0 +1,40 @@
+.admin-subscribers {
+  max-width: var(--max-width-admin);
+}
+
+.subscribers-toolbar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.subscribers-search,
+.subscribers-add {
+  display: flex;
+  gap: 8px;
+}
+
+.subscribers-search input,
+.subscribers-add input {
+  padding: 8px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  width: 240px;
+}
+
+.subscribers-search input:focus,
+.subscribers-add input:focus {
+  border-color: var(--color-navy);
+}
+
+.status-active {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-unsubscribed {
+  background-color: var(--color-bg-gray);
+  color: var(--color-text-muted);
+}
