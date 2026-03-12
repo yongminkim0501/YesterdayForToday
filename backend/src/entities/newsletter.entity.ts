@@ -29,10 +29,10 @@ export class Newsletter {
   @Column({ type: 'varchar', default: NewsletterStatus.DRAFT })
   status: NewsletterStatus;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   scheduledAt: Date | null;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   sentAt: Date | null;
 
   @CreateDateColumn()
