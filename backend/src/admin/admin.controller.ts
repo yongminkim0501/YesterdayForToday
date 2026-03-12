@@ -137,6 +137,15 @@ export class AdminController {
 
   // Subscribers management
   @UseGuards(JwtAuthGuard)
+  @Get('subscribers/export')
+  async exportSubscribers(@Res() res: Response) {
+    const csv = await this.adminService.exportSubscribersCsv();
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=subscribers.csv');
+    res.send(csv);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('subscribers')
   async getSubscribers() {
     return this.adminService.getSubscribers();
@@ -153,14 +162,5 @@ export class AdminController {
   async deleteSubscriber(@Param('id', ParseIntPipe) id: number) {
     await this.adminService.deleteSubscriber(id);
     return { message: '삭제되었습니다.' };
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('subscribers/export')
-  async exportSubscribers(@Res() res: Response) {
-    const csv = await this.adminService.exportSubscribersCsv();
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=subscribers.csv');
-    res.send(csv);
   }
 }

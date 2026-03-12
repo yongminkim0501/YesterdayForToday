@@ -3,6 +3,15 @@ import * as nodemailer from 'nodemailer';
 import { marked } from 'marked';
 import { MetricsService } from '../metrics/metrics.service';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -100,7 +109,8 @@ export class EmailService {
       sections.push({ label: currentSection, content: currentContent.trim() });
     }
 
-    const companyDisplay = company.toUpperCase();
+    const companyDisplay = escapeHtml(company.toUpperCase());
+    const escapedTitle = escapeHtml(title);
 
     // 섹션 HTML 생성
     const sectionsHtml = sections
@@ -112,14 +122,14 @@ export class EmailService {
             <tr>
               <td style="padding-bottom: 10px;">
                 <span style="display: inline-block; background-color: #111111; color: #ffffff; padding: 4px 12px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px;">
-                  ${s.label}
+                  ${escapeHtml(s.label)}
                 </span>
               </td>
             </tr>
             <tr>
               <td>
                 <p style="margin: 0; font-size: 15px; line-height: 1.85; color: #333333; word-break: keep-all;">
-                  ${s.content.replace(/\*\*([^*]+)\*\*/g, '<strong style="color: #111;">$1</strong>').replace(/\n/g, '<br>')}
+                  ${escapeHtml(s.content).replace(/\*\*([^*]+)\*\*/g, '<strong style="color: #111;">$1</strong>').replace(/\n/g, '<br>')}
                 </p>
               </td>
             </tr>
@@ -130,6 +140,9 @@ export class EmailService {
       )
       .join('');
 
+    const escapedSourceUrl = escapeHtml(sourceUrl);
+    const escapedSourceText = escapeHtml(sourceText || '원문 보기');
+
     return `
       <!-- Company & Title -->
       <tr>
@@ -138,7 +151,7 @@ export class EmailService {
             ${companyDisplay}
           </p>
           <h2 style="margin: 0; font-size: 21px; font-weight: 700; color: #111111; line-height: 1.45; letter-spacing: -0.3px;">
-            ${title}
+            ${escapedTitle}
           </h2>
         </td>
       </tr>
@@ -148,8 +161,8 @@ export class EmailService {
           ? `
       <tr>
         <td style="padding: 24px 40px 0;">
-          <a href="${sourceUrl}" style="display: inline-block; padding: 9px 20px; border: 1px solid #cccccc; color: #555555; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;">
-            ${sourceText || '원문 보기'} →
+          <a href="${escapedSourceUrl}" style="display: inline-block; padding: 9px 20px; border: 1px solid #cccccc; color: #555555; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;">
+            ${escapedSourceText} →
           </a>
         </td>
       </tr>
@@ -217,21 +230,44 @@ export class EmailService {
 </html>`;
   }
 
-  async sendEmail(to: string, subject: string, html: string): Promise<void> {
+  async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+    options?: { unsubscribeUrl?: string },
+  ): Promise<{ success: boolean; error?: string }> {
     const end = this.metricsService.emailSendDuration.startTimer();
     try {
-      await this.transporter.sendMail({
+      const mailOptions: nodemailer.SendMailOptions = {
         from: `"오늘을 만들었던 어제의 기술" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
         to,
         subject,
         html,
-      });
+      };
+
+      if (options?.unsubscribeUrl) {
+        mailOptions.headers = {
+          'List-Unsubscribe': `<${options.unsubscribeUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        };
+      }
+
+      await this.transporter.sendMail(mailOptions);
       this.metricsService.emailsSent.inc({ type: 'newsletter' });
       this.logger.log(`Email sent to ${to}`);
+      return { success: true };
     } catch (error) {
       this.metricsService.emailsFailed.inc();
-      this.logger.error(`Failed to send email to ${to}`, error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Detect SMTP bounce errors (5xx codes)
+      if (errorMessage.match(/\b5[0-9]{2}\b/) || errorMessage.toLowerCase().includes('bounce')) {
+        this.logger.warn(`Bounced email detected for ${to}: ${errorMessage}`);
+      } else {
+        this.logger.error(`Failed to send email to ${to}`, error);
+      }
+
+      return { success: false, error: errorMessage };
     } finally {
       end();
     }
@@ -243,9 +279,11 @@ export class EmailService {
     markdownContent: string,
     unsubscribeToken: string,
     newsletterId: number,
-  ): Promise<void> {
+  ): Promise<{ success: boolean; error?: string }> {
     const styledContent = this.buildStyledContent(markdownContent);
     const fullHtml = this.buildEmailHtml(styledContent, unsubscribeToken, newsletterId);
-    await this.sendEmail(to, subject, fullHtml);
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
+    const unsubscribeUrl = `${frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
+    return this.sendEmail(to, subject, fullHtml, { unsubscribeUrl });
   }
 }

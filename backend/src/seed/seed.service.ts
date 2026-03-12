@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 import { Admin } from '../entities/admin.entity';
 import { Post, Company, PostStatus } from '../entities/post.entity';
 import { Newsletter, NewsletterStatus } from '../entities/newsletter.entity';
@@ -20,6 +21,10 @@ export class SeedService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_SEED !== 'true') {
+      this.logger.log('Seeding is disabled in production. Set ENABLE_SEED=true to override.');
+      return;
+    }
     await this.seed();
   }
 
@@ -36,13 +41,19 @@ export class SeedService implements OnModuleInit {
       return;
     }
 
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const password = process.env.ADMIN_DEFAULT_PASSWORD || (() => {
+      const generated = uuidv4();
+      this.logger.warn(`No ADMIN_DEFAULT_PASSWORD set. Generated random password: ${generated}`);
+      return generated;
+    })();
+
+    const hashedPassword = await bcrypt.hash(password, 10);
     const admin = this.adminRepo.create({
       username: 'admin',
       password: hashedPassword,
     });
     await this.adminRepo.save(admin);
-    this.logger.log('Default admin created (admin / admin123)');
+    this.logger.log('Default admin created (username: admin)');
   }
 
   private async seedPosts() {

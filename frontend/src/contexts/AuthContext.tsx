@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async (data: LoginRequest) => {
     const response = await apiLogin(data);
-    const newToken = response.data.token;
+    const newToken = response.data.access_token;
     localStorage.setItem('admin_token', newToken);
     setToken(newToken);
   }, []);

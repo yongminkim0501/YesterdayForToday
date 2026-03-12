@@ -23,6 +23,7 @@
   font-size: 15px;
   color: var(--color-text-light);
   margin-bottom: 28px;
+  line-height: 1.6;
 }
 
 .subscription-form {
@@ -80,6 +81,84 @@
 
 .subscription-message.error {
   color: var(--color-error);
+}
+
+/* Success state */
+.success-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.subscription-hint {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-bottom: 24px;
+}
+
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-resend {
+  padding: 10px 24px;
+  border: 1.5px solid var(--color-navy);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-resend:hover:not(:disabled) {
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+
+.btn-resend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+.btn-text:hover {
+  color: var(--color-navy);
+}
+
+/* Loading spinner */
+.loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

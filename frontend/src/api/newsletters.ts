@@ -6,10 +6,18 @@ export interface Newsletter {
   content: string;
   summary?: string;
   companies?: string[];
-  published_at?: string;
-  created_at: string;
-  updated_at?: string;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
   status?: string;
+  postIds?: number[];
+  /** @deprecated Use createdAt */
+  created_at?: string;
+  /** @deprecated Use publishedAt */
+  published_at?: string;
+  /** @deprecated Use updatedAt */
+  updated_at?: string;
+  /** @deprecated Use postIds */
   post_ids?: number[];
 }
 

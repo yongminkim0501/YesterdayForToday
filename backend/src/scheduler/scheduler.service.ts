@@ -28,7 +28,7 @@ export class SchedulerService {
    */
   @Cron('* * * * *')
   async updateGaugeMetrics() {
-    const activeCount = (await this.subscribersService.findActive()).length;
+    const activeCount = await this.subscribersService.countActive();
     this.metricsService.activeSubscribers.set(activeCount);
 
     const newsletterCount = await this.newsletterRepo.count();
@@ -71,23 +71,40 @@ export class SchedulerService {
 
     let sentCount = 0;
     let failCount = 0;
+    const batchSize = 10;
 
-    for (const subscriber of subscribers) {
-      try {
-        await this.emailService.sendNewsletter(
-          subscriber.email,
-          newsletter.title,
-          newsletter.content,
-          subscriber.unsubscribeToken,
-          newsletter.id,
-        );
-        sentCount++;
-      } catch (error) {
-        failCount++;
-        this.logger.error(
-          `뉴스레터 #${newsletter.id} → ${subscriber.email} 발송 실패`,
-          error,
-        );
+    for (let i = 0; i < subscribers.length; i += batchSize) {
+      const batch = subscribers.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map((subscriber) =>
+          this.emailService.sendNewsletter(
+            subscriber.email,
+            newsletter.title,
+            newsletter.content,
+            subscriber.unsubscribeToken,
+            newsletter.id,
+          ),
+        ),
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        if (result.status === 'fulfilled' && result.value.success) {
+          sentCount++;
+        } else {
+          failCount++;
+          const error = result.status === 'rejected'
+            ? result.reason
+            : result.value.error;
+          this.logger.error(
+            `뉴스레터 #${newsletter.id} → ${batch[j].email} 발송 실패: ${error}`,
+          );
+        }
+      }
+
+      // Small delay between batches to avoid rate limiting
+      if (i + batchSize < subscribers.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 

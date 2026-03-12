@@ -35,17 +35,17 @@ const AdminDashboardPage: React.FC = () => {
       <div className="stats-grid">
         <div className="stat-card">
           <span className="stat-label">총 구독자</span>
-          <span className="stat-value">{stats?.subscriberCount ?? 0}</span>
+          <span className="stat-value">{stats?.subscribers?.total ?? 0}</span>
           <span className="stat-unit">명</span>
         </div>
         <div className="stat-card">
           <span className="stat-label">발행된 뉴스레터</span>
-          <span className="stat-value">{stats?.newsletterCount ?? 0}</span>
+          <span className="stat-value">{stats?.newsletters?.total ?? 0}</span>
           <span className="stat-unit">개</span>
         </div>
         <div className="stat-card">
           <span className="stat-label">등록된 포스트</span>
-          <span className="stat-value">{stats?.postCount ?? 0}</span>
+          <span className="stat-value">{stats?.posts?.total ?? 0}</span>
           <span className="stat-unit">개</span>
         </div>
       </div>

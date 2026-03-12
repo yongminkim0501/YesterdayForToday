@@ -13,8 +13,10 @@ import './AdminSubscribersPage.css';
 interface Subscriber {
   id: number;
   email: string;
-  created_at: string;
+  createdAt: string;
   status?: string;
+  /** @deprecated Use createdAt */
+  created_at?: string;
 }
 
 const AdminSubscribersPage: React.FC = () => {
@@ -34,8 +36,10 @@ const AdminSubscribersPage: React.FC = () => {
       const params: any = { page, limit: 20 };
       if (keyword) params.keyword = keyword;
       const res = await getSubscribers(params);
-      setSubscribers(res.data.subscribers || []);
-      setTotalPages(res.data.totalPages || 1);
+      const data = res.data;
+      const allSubscribers: Subscriber[] = Array.isArray(data) ? data : (data.subscribers || []);
+      setSubscribers(allSubscribers);
+      setTotalPages(Array.isArray(data) ? 1 : (data.totalPages || 1));
     } catch {
       setError('구독자를 불러오는 데 실패했습니다.');
     } finally {
@@ -156,7 +160,7 @@ const AdminSubscribersPage: React.FC = () => {
                           {sub.status === 'unsubscribed' ? '구독 취소' : '활성'}
                         </span>
                       </td>
-                      <td>{formatDate(sub.created_at)}</td>
+                      <td>{formatDate(sub.createdAt || sub.created_at || '')}</td>
                       <td>
                         <button
                           className="btn btn-danger btn-sm"

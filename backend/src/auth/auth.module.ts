@@ -7,7 +7,12 @@ import { JwtStrategy } from './jwt.strategy';
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'yesterday-for-today-secret-key',
+      secret: (() => {
+        if (!process.env.JWT_SECRET) {
+          throw new Error('JWT_SECRET environment variable is required. The application cannot start without it.');
+        }
+        return process.env.JWT_SECRET;
+      })(),
       signOptions: { expiresIn: '24h' },
     }),
   ],

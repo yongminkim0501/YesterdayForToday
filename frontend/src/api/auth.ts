@@ -6,13 +6,22 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
+  access_token: string;
+  username: string;
 }
 
 export interface AdminStats {
-  subscriberCount: number;
-  newsletterCount: number;
-  postCount: number;
+  subscribers: {
+    total: number;
+    active: number;
+  };
+  posts: {
+    total: number;
+  };
+  newsletters: {
+    total: number;
+    sent: number;
+  };
 }
 
 export const login = (data: LoginRequest) =>

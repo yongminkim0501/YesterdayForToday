@@ -1,12 +1,14 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import PublicLayout from './components/common/PublicLayout';
 import Loading from './components/common/Loading';
 import LandingPage from './pages/landing/LandingPage';
 import UnsubscribePage from './pages/unsubscribe/UnsubscribePage';
 import VerifyEmailPage from './pages/verify/VerifyEmailPage';
 import PrivacyPage from './pages/privacy/PrivacyPage';
+import NotFoundPage from './pages/NotFoundPage';
 import './styles/global.css';
 
 // Lazy-loaded admin pages
@@ -21,6 +23,7 @@ const ProtectedRoute = lazy(() => import('./components/admin/ProtectedRoute'));
 
 const App: React.FC = () => {
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<Loading />}>
@@ -52,10 +55,14 @@ const App: React.FC = () => {
               <Route path="newsletters/:id/edit" element={<AdminNewsletterEditorPage />} />
               <Route path="subscribers" element={<AdminSubscribersPage />} />
             </Route>
+
+            {/* 404 Catch-all */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
     </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -155,6 +155,12 @@ export class SubscribersService {
     });
   }
 
+  async countActive(): Promise<number> {
+    return this.subscriberRepo.count({
+      where: { isActive: true, isVerified: true },
+    });
+  }
+
   async findOne(id: number): Promise<Subscriber> {
     const subscriber = await this.subscriberRepo.findOne({ where: { id } });
     if (!subscriber) {
@@ -172,11 +178,23 @@ export class SubscribersService {
     await this.subscriberRepo.remove(subscriber);
   }
 
+  private escapeCsvField(field: string): string {
+    // Prevent CSV formula injection by prefixing dangerous characters with a single quote
+    if (/^[=+\-@]/.test(field)) {
+      field = "'" + field;
+    }
+    // Wrap in quotes if field contains comma, quote, or newline
+    if (/[",\n\r]/.test(field)) {
+      field = '"' + field.replace(/"/g, '""') + '"';
+    }
+    return field;
+  }
+
   async exportCsv(): Promise<string> {
     const subscribers = await this.findAll();
     const header = 'id,email,isActive,isVerified,createdAt\n';
     const rows = subscribers
-      .map((s) => `${s.id},${s.email},${s.isActive},${s.isVerified},${s.createdAt.toISOString()}`)
+      .map((s) => `${s.id},${this.escapeCsvField(s.email)},${s.isActive},${s.isVerified},${s.createdAt.toISOString()}`)
       .join('\n');
     return header + rows;
   }

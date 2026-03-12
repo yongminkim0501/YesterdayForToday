@@ -47,7 +47,7 @@ const AdminNewsletterEditorPage: React.FC = () => {
         setTitle(nl.title);
         setContent(nl.content);
         setSummary(nl.summary || '');
-        setSelectedPostIds(nl.post_ids || []);
+        setSelectedPostIds(nl.postIds || nl.post_ids || []);
       } catch {
         alert('뉴스레터를 불러오는 데 실패했습니다.');
         navigate('/admin/newsletters');
@@ -73,7 +73,7 @@ const AdminNewsletterEditorPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const data = { title, content, summary, post_ids: selectedPostIds };
+      const data = { title, content, summary, postIds: selectedPostIds };
       if (isEdit) {
         await updateNewsletter(parseInt(id!, 10), data);
       } else {

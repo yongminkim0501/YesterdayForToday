@@ -41,7 +41,7 @@ import { HealthController } from './health.controller';
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'yesterday_for_today',
       entities: [Subscriber, Post, Newsletter, Admin],
-      synchronize: true,
+      synchronize: process.env.NODE_ENV !== 'production',
     }),
     SubscribersModule,
     AdminModule,

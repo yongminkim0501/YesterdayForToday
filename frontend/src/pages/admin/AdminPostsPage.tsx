@@ -11,11 +11,11 @@ interface PostForm {
   title: string;
   content: string;
   summary: string;
-  source_url: string;
+  sourceUrl: string;
   company: string;
 }
 
-const emptyForm: PostForm = { title: '', content: '', summary: '', source_url: '', company: '' };
+const emptyForm: PostForm = { title: '', content: '', summary: '', sourceUrl: '', company: '' };
 
 const AdminPostsPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -33,8 +33,10 @@ const AdminPostsPage: React.FC = () => {
     setError('');
     try {
       const res = await getPosts({ page, limit: 10 });
-      setPosts(res.data.posts || []);
-      setTotal(res.data.totalPages || 1);
+      const data = res.data;
+      const allPosts: Post[] = Array.isArray(data) ? data : (data.posts || []);
+      setPosts(allPosts);
+      setTotal(Array.isArray(data) ? 1 : (data.totalPages || 1));
     } catch {
       setError('포스트를 불러오는 데 실패했습니다.');
     } finally {
@@ -57,7 +59,7 @@ const AdminPostsPage: React.FC = () => {
       title: post.title,
       content: post.content,
       summary: post.summary || '',
-      source_url: post.source_url || '',
+      sourceUrl: post.sourceUrl || post.source_url || '',
       company: post.company || '',
     });
     setEditingId(post.id);
@@ -142,8 +144,8 @@ const AdminPostsPage: React.FC = () => {
                 <label>원문 URL</label>
                 <input
                   type="url"
-                  value={form.source_url}
-                  onChange={(e) => setForm({ ...form, source_url: e.target.value })}
+                  value={form.sourceUrl}
+                  onChange={(e) => setForm({ ...form, sourceUrl: e.target.value })}
                   placeholder="https://..."
                 />
               </div>
@@ -209,7 +211,7 @@ const AdminPostsPage: React.FC = () => {
                       <td>
                         {post.company && <span className="badge">{post.company}</span>}
                       </td>
-                      <td>{formatDate(post.created_at)}</td>
+                      <td>{formatDate(post.createdAt || post.created_at || '')}</td>
                       <td>
                         <div className="admin-table-actions">
                           <button className="btn btn-outline btn-sm" onClick={() => openEdit(post)}>

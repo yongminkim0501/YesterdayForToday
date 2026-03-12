@@ -5,9 +5,15 @@ export interface Post {
   title: string;
   content: string;
   summary?: string;
-  source_url?: string;
+  sourceUrl?: string;
   company?: string;
-  created_at: string;
+  createdAt: string;
+  updatedAt?: string;
+  /** @deprecated Use sourceUrl */
+  source_url?: string;
+  /** @deprecated Use createdAt */
+  created_at?: string;
+  /** @deprecated Use updatedAt */
   updated_at?: string;
 }
 

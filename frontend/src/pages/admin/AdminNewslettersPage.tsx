@@ -23,8 +23,10 @@ const AdminNewslettersPage: React.FC = () => {
     setError('');
     try {
       const res = await getAdminNewsletters({ page, limit: 10 });
-      setNewsletters(res.data.newsletters || []);
-      setTotalPages(res.data.totalPages || 1);
+      const data = res.data;
+      const allNewsletters: Newsletter[] = Array.isArray(data) ? data : (data.newsletters || []);
+      setNewsletters(allNewsletters);
+      setTotalPages(Array.isArray(data) ? 1 : (data.totalPages || 1));
     } catch {
       setError('뉴스레터를 불러오는 데 실패했습니다.');
     } finally {
@@ -110,7 +112,7 @@ const AdminNewslettersPage: React.FC = () => {
                           {statusLabel(nl.status)}
                         </span>
                       </td>
-                      <td>{formatDate(nl.created_at)}</td>
+                      <td>{formatDate(nl.createdAt || nl.created_at || '')}</td>
                       <td>
                         <div className="admin-table-actions">
                           <Link

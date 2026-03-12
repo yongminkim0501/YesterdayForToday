@@ -150,26 +150,46 @@ export class AdminService {
   }
 
   // Send newsletter
-  async sendNewsletter(id: number): Promise<{ sentCount: number }> {
+  async sendNewsletter(id: number): Promise<{ sentCount: number; failCount: number }> {
     const newsletter = await this.findOneNewsletter(id);
     const subscribers = await this.subscribersService.findActive();
 
     let sentCount = 0;
-    for (const subscriber of subscribers) {
-      try {
-        await this.emailService.sendNewsletter(
-          subscriber.email,
-          newsletter.title,
-          newsletter.content,
-          subscriber.unsubscribeToken,
-          newsletter.id,
-        );
-        sentCount++;
-      } catch (error) {
-        this.logger.error(
-          `Failed to send to ${subscriber.email}`,
-          error,
-        );
+    let failCount = 0;
+    const batchSize = 10;
+
+    for (let i = 0; i < subscribers.length; i += batchSize) {
+      const batch = subscribers.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map((subscriber) =>
+          this.emailService.sendNewsletter(
+            subscriber.email,
+            newsletter.title,
+            newsletter.content,
+            subscriber.unsubscribeToken,
+            newsletter.id,
+          ),
+        ),
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        if (result.status === 'fulfilled' && result.value.success) {
+          sentCount++;
+        } else {
+          failCount++;
+          const error = result.status === 'rejected'
+            ? result.reason
+            : result.value.error;
+          this.logger.error(
+            `Failed to send to ${batch[j].email}: ${error}`,
+          );
+        }
+      }
+
+      // Small delay between batches to avoid rate limiting
+      if (i + batchSize < subscribers.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 
@@ -177,7 +197,7 @@ export class AdminService {
     newsletter.sentAt = new Date();
     await this.newsletterRepo.save(newsletter);
 
-    return { sentCount };
+    return { sentCount, failCount };
   }
 
   async testSendNewsletter(id: number, testEmail?: string): Promise<void> {
