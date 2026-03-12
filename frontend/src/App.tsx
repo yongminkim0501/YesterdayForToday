@@ -4,8 +4,6 @@ import { AuthProvider } from './contexts/AuthContext';
 import PublicLayout from './components/common/PublicLayout';
 import Loading from './components/common/Loading';
 import LandingPage from './pages/landing/LandingPage';
-import ArchivePage from './pages/archive/ArchivePage';
-import NewsletterDetailPage from './pages/archive/NewsletterDetailPage';
 import UnsubscribePage from './pages/unsubscribe/UnsubscribePage';
 import VerifyEmailPage from './pages/verify/VerifyEmailPage';
 import './styles/global.css';
@@ -29,8 +27,6 @@ const App: React.FC = () => {
             {/* Public Routes */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/archive" element={<ArchivePage />} />
-              <Route path="/archive/:id" element={<NewsletterDetailPage />} />
               <Route path="/verify" element={<VerifyEmailPage />} />
               <Route path="/unsubscribe" element={<UnsubscribePage />} />
             </Route>

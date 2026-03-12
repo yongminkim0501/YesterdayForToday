@@ -2,8 +2,6 @@ import React, { useRef } from 'react';
 import HeroSection from '../../components/landing/HeroSection';
 import ServiceIntroSection from '../../components/landing/ServiceIntroSection';
 import SubscriptionForm from '../../components/landing/SubscriptionForm';
-import RecentNewsletterPreview from '../../components/landing/RecentNewsletterPreview';
-
 const LandingPage: React.FC = () => {
   const subscriptionRef = useRef<HTMLDivElement>(null);
 
@@ -15,7 +13,6 @@ const LandingPage: React.FC = () => {
     <>
       <HeroSection onCTAClick={scrollToSubscription} />
       <ServiceIntroSection />
-      <RecentNewsletterPreview />
       <SubscriptionForm ref={subscriptionRef} />
     </>
   );

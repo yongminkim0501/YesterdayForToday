@@ -18,12 +18,6 @@ const Navbar: React.FC = () => {
           >
             홈
           </Link>
-          <Link
-            to="/archive"
-            className={`navbar-link ${location.pathname.startsWith('/archive') ? 'active' : ''}`}
-          >
-            아카이브
-          </Link>
         </div>
       </div>
     </nav>

@@ -13,23 +13,6 @@ export interface Newsletter {
   post_ids?: number[];
 }
 
-export interface NewsletterListResponse {
-  newsletters: Newsletter[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-export const getNewsletters = (params?: {
-  page?: number;
-  limit?: number;
-  company?: string;
-  keyword?: string;
-}) => client.get<NewsletterListResponse>('/newsletters', { params });
-
-export const getNewsletter = (id: number) =>
-  client.get<Newsletter>(`/newsletters/${id}`);
-
 // Admin endpoints
 export const getAdminNewsletters = (params?: { page?: number; limit?: number }) =>
   client.get('/admin/newsletters', { params });

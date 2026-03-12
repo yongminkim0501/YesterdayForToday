@@ -7,7 +7,6 @@ import { Post } from './entities/post.entity';
 import { Newsletter } from './entities/newsletter.entity';
 import { Admin } from './entities/admin.entity';
 import { SubscribersModule } from './subscribers/subscribers.module';
-import { NewslettersModule } from './newsletters/newsletters.module';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
@@ -29,7 +28,6 @@ import { SchedulerModule } from './scheduler/scheduler.module';
       synchronize: true,
     }),
     SubscribersModule,
-    NewslettersModule,
     AdminModule,
     AuthModule,
     EmailModule,
