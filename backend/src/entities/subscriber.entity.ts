@@ -26,6 +26,9 @@ export class Subscriber {
   @Column({ unique: true })
   unsubscribeToken: string;
 
+  @Column({ default: 0 })
+  lastSentNewsletterIndex: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
