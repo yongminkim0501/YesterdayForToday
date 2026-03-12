@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Query, Get } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { SubscribersService } from './subscribers.service';
 import { SubscribeDto } from './dto/subscribe.dto';
 import { UnsubscribeDto } from './dto/unsubscribe.dto';
@@ -8,6 +9,7 @@ export class SubscribersController {
   constructor(private readonly subscribersService: SubscribersService) {}
 
   @Post()
+  @Throttle({ short: { ttl: 60000, limit: 3 } })
   async subscribe(@Body() dto: SubscribeDto) {
     const subscriber = await this.subscribersService.subscribe(dto.email);
     return {

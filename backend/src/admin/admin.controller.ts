@@ -12,6 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminService } from './admin.service';
 import { LoginDto } from './dto/login.dto';
@@ -26,6 +27,7 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Post('login')
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   async login(@Body() dto: LoginDto) {
     return this.adminService.login(dto.username, dto.password);
   }
