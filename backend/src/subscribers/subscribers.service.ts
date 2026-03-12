@@ -53,7 +53,7 @@ export class SubscribersService {
   }
 
   private async sendVerificationEmail(subscriber: Subscriber): Promise<void> {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
     const verifyUrl = `${frontendUrl}/verify?token=${subscriber.verificationToken}`;
 
     const html = `

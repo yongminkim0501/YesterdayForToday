@@ -164,7 +164,7 @@ export class EmailService {
     unsubscribeToken: string,
     newsletterId: number,
   ): string {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
     const unsubscribeUrl = `${frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
 
     return `
