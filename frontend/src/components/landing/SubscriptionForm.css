@@ -45,6 +45,29 @@
   border-color: var(--color-navy);
 }
 
+.subscription-agree {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--color-text-light);
+  cursor: pointer;
+}
+
+.subscription-agree input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.privacy-link {
+  color: var(--color-navy);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
 .subscription-message {
   margin-top: 16px;
   font-size: 14px;

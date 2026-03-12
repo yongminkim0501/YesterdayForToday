@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
           </div>
           <div className="footer-links">
             <Link to="/">홈</Link>
-            <Link to="/archive">아카이브</Link>
+            <Link to="/privacy">개인정보처리방침</Link>
           </div>
         </div>
         <div className="footer-bottom">

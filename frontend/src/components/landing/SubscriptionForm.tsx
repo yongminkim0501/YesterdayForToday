@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { subscribe } from '../../api/subscribers';
 import './SubscriptionForm.css';
 
 const SubscriptionForm = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [email, setEmail] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -17,6 +19,12 @@ const SubscriptionForm = React.forwardRef<HTMLDivElement>((_, ref) => {
     if (!validateEmail(email)) {
       setStatus('error');
       setMessage('올바른 이메일 주소를 입력해 주세요.');
+      return;
+    }
+
+    if (!agreed) {
+      setStatus('error');
+      setMessage('개인정보처리방침에 동의해 주세요.');
       return;
     }
 
@@ -61,6 +69,19 @@ const SubscriptionForm = React.forwardRef<HTMLDivElement>((_, ref) => {
               {status === 'loading' ? '처리 중...' : '구독하기'}
             </button>
           </form>
+          <label className="subscription-agree">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+            />
+            <span>
+              <Link to="/privacy" target="_blank" className="privacy-link">
+                개인정보처리방침
+              </Link>
+              에 동의합니다.
+            </span>
+          </label>
           {message && (
             <p className={`subscription-message ${status}`}>{message}</p>
           )}

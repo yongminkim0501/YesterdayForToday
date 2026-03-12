@@ -6,6 +6,7 @@ import Loading from './components/common/Loading';
 import LandingPage from './pages/landing/LandingPage';
 import UnsubscribePage from './pages/unsubscribe/UnsubscribePage';
 import VerifyEmailPage from './pages/verify/VerifyEmailPage';
+import PrivacyPage from './pages/privacy/PrivacyPage';
 import './styles/global.css';
 
 // Lazy-loaded admin pages
@@ -29,6 +30,7 @@ const App: React.FC = () => {
               <Route path="/" element={<LandingPage />} />
               <Route path="/verify" element={<VerifyEmailPage />} />
               <Route path="/unsubscribe" element={<UnsubscribePage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
             </Route>
 
             {/* Admin Login (no layout) */}
