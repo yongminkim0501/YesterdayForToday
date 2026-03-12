@@ -163,6 +163,9 @@ export class EmailService {
     unsubscribeToken: string,
     newsletterId: number,
   ): string {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const unsubscribeUrl = `${frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
+
     return `
 <!DOCTYPE html>
 <html lang="ko">
@@ -195,10 +198,13 @@ export class EmailService {
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #111111; padding: 20px 40px; text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #555555; letter-spacing: 1px;">
+            <td style="background-color: #111111; padding: 24px 40px; text-align: center;">
+              <p style="margin: 0 0 12px 0; font-size: 11px; color: #555555; letter-spacing: 1px;">
                 &copy; 오늘을 만들었던 어제의 기술
               </p>
+              <a href="${unsubscribeUrl}" style="color: #777777; font-size: 11px; text-decoration: underline;">
+                구독 해지
+              </a>
             </td>
           </tr>
 
