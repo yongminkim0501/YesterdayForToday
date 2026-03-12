@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { marked } from 'marked';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter;
 
-  constructor() {
+  constructor(private readonly metricsService: MetricsService) {
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -217,6 +218,7 @@ export class EmailService {
   }
 
   async sendEmail(to: string, subject: string, html: string): Promise<void> {
+    const end = this.metricsService.emailSendDuration.startTimer();
     try {
       await this.transporter.sendMail({
         from: `"오늘을 만들었던 어제의 기술" <${process.env.SMTP_USER}>`,
@@ -224,10 +226,14 @@ export class EmailService {
         subject,
         html,
       });
+      this.metricsService.emailsSent.inc({ type: 'newsletter' });
       this.logger.log(`Email sent to ${to}`);
     } catch (error) {
+      this.metricsService.emailsFailed.inc();
       this.logger.error(`Failed to send email to ${to}`, error);
       throw error;
+    } finally {
+      end();
     }
   }
 

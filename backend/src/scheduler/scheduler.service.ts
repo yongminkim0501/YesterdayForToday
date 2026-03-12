@@ -5,6 +5,7 @@ import { Repository, LessThanOrEqual } from 'typeorm';
 import { Newsletter, NewsletterStatus } from '../entities/newsletter.entity';
 import { SubscribersService } from '../subscribers/subscribers.service';
 import { EmailService } from '../email/email.service';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class SchedulerService {
@@ -15,12 +16,25 @@ export class SchedulerService {
     private readonly newsletterRepo: Repository<Newsletter>,
     private readonly subscribersService: SubscribersService,
     private readonly emailService: EmailService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   /**
    * 매일 오전 6시에 실행
    * SCHEDULED 상태이고 scheduledAt이 현재 시간 이전인 뉴스레터를 발송
    */
+  /**
+   * 매분 Gauge 메트릭 갱신
+   */
+  @Cron('* * * * *')
+  async updateGaugeMetrics() {
+    const activeCount = (await this.subscribersService.findActive()).length;
+    this.metricsService.activeSubscribers.set(activeCount);
+
+    const newsletterCount = await this.newsletterRepo.count();
+    this.metricsService.totalNewsletters.set(newsletterCount);
+  }
+
   @Cron('0 6 * * *', { timeZone: 'Asia/Seoul' })
   async handleScheduledNewsletters() {
     this.logger.log('⏰ 예약 발송 배치 시작');

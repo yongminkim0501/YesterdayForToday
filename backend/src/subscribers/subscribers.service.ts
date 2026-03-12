@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subscriber } from '../entities/subscriber.entity';
 import { EmailService } from '../email/email.service';
+import { MetricsService } from '../metrics/metrics.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class SubscribersService {
     @InjectRepository(Subscriber)
     private readonly subscriberRepo: Repository<Subscriber>,
     private readonly emailService: EmailService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   async subscribe(email: string): Promise<Subscriber> {
@@ -37,6 +39,7 @@ export class SubscribersService {
       isVerified: false,
     });
     const saved = await this.subscriberRepo.save(subscriber);
+    this.metricsService.subscriptions.inc();
     await this.trySendVerificationEmail(saved);
     return saved;
   }
@@ -115,6 +118,7 @@ export class SubscribersService {
     subscriber.isVerified = true;
     (subscriber as any).verificationToken = null;
     await this.subscriberRepo.save(subscriber);
+    this.metricsService.verifications.inc();
     return { message: '이메일 인증이 완료되었습니다! 내일부터 뉴스레터를 받아보실 수 있습니다.', email: subscriber.email };
   }
 
@@ -127,6 +131,7 @@ export class SubscribersService {
     }
     subscriber.isActive = false;
     await this.subscriberRepo.save(subscriber);
+    this.metricsService.unsubscriptions.inc();
   }
 
   async verifyToken(token: string): Promise<{ valid: boolean; email?: string }> {
