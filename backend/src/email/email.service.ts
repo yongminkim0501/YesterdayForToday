@@ -221,7 +221,7 @@ export class EmailService {
     const end = this.metricsService.emailSendDuration.startTimer();
     try {
       await this.transporter.sendMail({
-        from: `"오늘을 만들었던 어제의 기술" <${process.env.SMTP_USER}>`,
+        from: `"오늘을 만들었던 어제의 기술" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
         to,
         subject,
         html,
