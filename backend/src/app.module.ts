@@ -16,8 +16,10 @@ import { SeedModule } from './seed/seed.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { MetricsMiddleware } from './metrics/metrics.middleware';
+import { HealthController } from './health.controller';
 
 @Module({
+  controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
