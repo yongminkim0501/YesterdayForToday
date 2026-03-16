@@ -16,6 +16,7 @@ function escapeHtml(str: string): string {
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter;
+  readonly frontendUrl: string;
 
   constructor(private readonly metricsService: MetricsService) {
     this.transporter = nodemailer.createTransport({
@@ -27,6 +28,7 @@ export class EmailService {
         pass: process.env.SMTP_PASS,
       },
     });
+    this.frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
   }
 
   async convertMarkdownToHtml(markdown: string): Promise<string> {
@@ -177,8 +179,7 @@ export class EmailService {
     unsubscribeToken: string,
     newsletterId: number,
   ): string {
-    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
-    const unsubscribeUrl = `${frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
+    const unsubscribeUrl = `${this.frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
 
     return `
 <!DOCTYPE html>
@@ -239,7 +240,7 @@ export class EmailService {
     const end = this.metricsService.emailSendDuration.startTimer();
     try {
       const mailOptions: nodemailer.SendMailOptions = {
-        from: `"오늘을 만들었던 어제의 기술" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+        from: { name: '오늘을 만들었던 어제의 기술', address: process.env.SMTP_FROM || process.env.SMTP_USER || '' },
         to,
         subject,
         html,
@@ -273,6 +274,52 @@ export class EmailService {
     }
   }
 
+  async sendInBatches(
+    subscribers: { email: string; unsubscribeToken: string }[],
+    newsletter: { title: string; content: string; id: number },
+    onResult?: (email: string, success: boolean, error?: string) => void,
+  ): Promise<{ sentCount: number; failCount: number }> {
+    let sentCount = 0;
+    let failCount = 0;
+    const batchSize = 10;
+
+    for (let i = 0; i < subscribers.length; i += batchSize) {
+      const batch = subscribers.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map((subscriber) =>
+          this.sendNewsletter(
+            subscriber.email,
+            newsletter.title,
+            newsletter.content,
+            subscriber.unsubscribeToken,
+            newsletter.id,
+          ),
+        ),
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        if (result.status === 'fulfilled' && result.value.success) {
+          sentCount++;
+          onResult?.(batch[j].email, true);
+        } else {
+          failCount++;
+          const error =
+            result.status === 'rejected'
+              ? result.reason
+              : result.value.error;
+          onResult?.(batch[j].email, false, String(error));
+        }
+      }
+
+      if (i + batchSize < subscribers.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
+    return { sentCount, failCount };
+  }
+
   async sendNewsletter(
     to: string,
     subject: string,
@@ -282,8 +329,7 @@ export class EmailService {
   ): Promise<{ success: boolean; error?: string }> {
     const styledContent = this.buildStyledContent(markdownContent);
     const fullHtml = this.buildEmailHtml(styledContent, unsubscribeToken, newsletterId);
-    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
-    const unsubscribeUrl = `${frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
+    const unsubscribeUrl = `${this.frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
     return this.sendEmail(to, subject, fullHtml, { unsubscribeUrl });
   }
 }

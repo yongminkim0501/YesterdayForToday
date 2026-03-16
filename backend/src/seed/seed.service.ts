@@ -114,7 +114,10 @@ export class SeedService implements OnModuleInit {
       where: { status: PostStatus.PUBLISHED },
     });
 
-    const content = `## Meta Engineering Blog
+    const newsletterData = [
+      {
+        title: '오늘을 만들었던 어제의 기술 #1 - Meta의 분산 캐시 시스템',
+        content: `## Meta Engineering Blog
 
 ### 분산 캐시 시스템 개선기
 
@@ -124,11 +127,12 @@ export class SeedService implements OnModuleInit {
 **핵심 요약**
 Meta는 분산 캐시 계층을 재설계하여 **Regional Cache**와 **Global Cache**를 분리하고, 비동기 무효화 파이프라인을 도입했습니다. 캐시 히트율 99.5%를 유지하면서 평균 무효화 지연을 500ms 이하로 줄였습니다.
 
-[원문 보기](https://engineering.fb.com/2024/distributed-caching/)
-
----
-
-## Netflix Tech Blog
+[원문 보기](https://engineering.fb.com/2024/distributed-caching/)`,
+        postTitle: 'Scaling Distributed Caching at Meta',
+      },
+      {
+        title: '오늘을 만들었던 어제의 기술 #2 - Netflix 비디오 인코딩 최적화',
+        content: `## Netflix Tech Blog
 
 ### 비디오 인코딩 파이프라인 최적화
 
@@ -138,16 +142,21 @@ Meta는 분산 캐시 계층을 재설계하여 **Regional Cache**와 **Global C
 **핵심 요약**
 Netflix는 **per-shot encoding**을 도입하여 장면 단위로 최적의 비트레이트를 동적으로 결정합니다. 동일 품질 대비 **평균 20%의 대역폭 절감**을 달성했습니다.
 
-[원문 보기](https://netflixtechblog.com/video-encoding-optimization/)
-`;
+[원문 보기](https://netflixtechblog.com/video-encoding-optimization/)`,
+        postTitle: 'How Netflix Optimizes Video Encoding Pipeline',
+      },
+    ];
 
-    const newsletter = this.newsletterRepo.create({
-      title: '오늘을 만들었던 어제의 기술 #1 - 대규모 시스템의 캐싱과 인코딩',
-      content,
-      status: NewsletterStatus.DRAFT,
-      posts,
-    });
-    await this.newsletterRepo.save(newsletter);
-    this.logger.log('Seeded 1 sample newsletter');
+    for (const data of newsletterData) {
+      const post = posts.find((p) => p.title === data.postTitle);
+      const newsletter = this.newsletterRepo.create({
+        title: data.title,
+        content: data.content,
+        status: NewsletterStatus.DRAFT,
+        posts: post ? [post] : [],
+      });
+      await this.newsletterRepo.save(newsletter);
+    }
+    this.logger.log(`Seeded ${newsletterData.length} sample newsletters`);
   }
 }

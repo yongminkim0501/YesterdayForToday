@@ -78,6 +78,8 @@ export class SchedulerService {
     });
 
     // 배치 발송
+    const subscribersToUpdate: Subscriber[] = [];
+
     for (let i = 0; i < sendTasks.length; i += batchSize) {
       const batch = sendTasks.slice(i, i + batchSize);
 
@@ -99,10 +101,9 @@ export class SchedulerService {
 
         if (result.status === 'fulfilled' && result.value.success) {
           sentCount++;
-          // 다음 인덱스로 업데이트 (총 개수 이상이면 0으로 리셋)
           subscriber.lastSentNewsletterIndex =
             nextIndex >= totalNewsletters ? 0 : nextIndex;
-          await this.subscriberRepo.save(subscriber);
+          subscribersToUpdate.push(subscriber);
         } else {
           failCount++;
           const error =
@@ -121,9 +122,25 @@ export class SchedulerService {
       }
     }
 
+    // 벌크 업데이트
+    if (subscribersToUpdate.length > 0) {
+      await this.subscriberRepo.save(subscribersToUpdate);
+    }
+
     this.logger.log(
       `📬 드립 발송 완료: 성공 ${sentCount}, 실패 ${failCount}`,
     );
+  }
+
+  /**
+   * 매일 새벽 4시 (KST) - 구독 취소 후 6개월 지난 구독자 데이터 삭제
+   */
+  @Cron('0 4 * * *', { timeZone: 'Asia/Seoul' })
+  async handleExpiredSubscriberCleanup() {
+    this.logger.log('🧹 만료 구독자 정리 시작');
+    const deletedCount =
+      await this.subscribersService.removeExpiredUnsubscribed();
+    this.logger.log(`🧹 만료 구독자 정리 완료: ${deletedCount}명 삭제`);
   }
 
   /**
@@ -164,44 +181,17 @@ export class SchedulerService {
       return;
     }
 
-    let sentCount = 0;
-    let failCount = 0;
-    const batchSize = 10;
-
-    for (let i = 0; i < subscribers.length; i += batchSize) {
-      const batch = subscribers.slice(i, i + batchSize);
-      const results = await Promise.allSettled(
-        batch.map((subscriber) =>
-          this.emailService.sendNewsletter(
-            subscriber.email,
-            newsletter.title,
-            newsletter.content,
-            subscriber.unsubscribeToken,
-            newsletter.id,
-          ),
-        ),
-      );
-
-      for (let j = 0; j < results.length; j++) {
-        const result = results[j];
-        if (result.status === 'fulfilled' && result.value.success) {
-          sentCount++;
-        } else {
-          failCount++;
-          const error =
-            result.status === 'rejected'
-              ? result.reason
-              : result.value.error;
+    const { sentCount, failCount } = await this.emailService.sendInBatches(
+      subscribers,
+      newsletter,
+      (email, success, error) => {
+        if (!success) {
           this.logger.error(
-            `뉴스레터 #${newsletter.id} → ${batch[j].email} 발송 실패: ${error}`,
+            `뉴스레터 #${newsletter.id} → ${email} 발송 실패: ${error}`,
           );
         }
-      }
-
-      if (i + batchSize < subscribers.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-    }
+      },
+    );
 
     newsletter.status = NewsletterStatus.SENT;
     newsletter.sentAt = new Date();

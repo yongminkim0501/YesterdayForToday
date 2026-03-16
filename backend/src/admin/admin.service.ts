@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -103,7 +104,11 @@ export class AdminService {
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
     });
 
-    if (dto.postIds && dto.postIds.length > 0) {
+    if (dto.postIds && dto.postIds.length > 1) {
+      throw new BadRequestException('뉴스레터에는 포스트를 1개만 연결할 수 있습니다.');
+    }
+
+    if (dto.postIds && dto.postIds.length === 1) {
       newsletter.posts = await this.postRepo.find({
         where: { id: In(dto.postIds) },
       });
@@ -136,6 +141,9 @@ export class AdminService {
     if (dto.scheduledAt !== undefined) {
       newsletter.scheduledAt = dto.scheduledAt ? new Date(dto.scheduledAt) : null;
     }
+    if (dto.postIds && dto.postIds.length > 1) {
+      throw new BadRequestException('뉴스레터에는 포스트를 1개만 연결할 수 있습니다.');
+    }
     if (dto.postIds) {
       newsletter.posts = await this.postRepo.find({
         where: { id: In(dto.postIds) },
@@ -154,44 +162,15 @@ export class AdminService {
     const newsletter = await this.findOneNewsletter(id);
     const subscribers = await this.subscribersService.findActive();
 
-    let sentCount = 0;
-    let failCount = 0;
-    const batchSize = 10;
-
-    for (let i = 0; i < subscribers.length; i += batchSize) {
-      const batch = subscribers.slice(i, i + batchSize);
-      const results = await Promise.allSettled(
-        batch.map((subscriber) =>
-          this.emailService.sendNewsletter(
-            subscriber.email,
-            newsletter.title,
-            newsletter.content,
-            subscriber.unsubscribeToken,
-            newsletter.id,
-          ),
-        ),
-      );
-
-      for (let j = 0; j < results.length; j++) {
-        const result = results[j];
-        if (result.status === 'fulfilled' && result.value.success) {
-          sentCount++;
-        } else {
-          failCount++;
-          const error = result.status === 'rejected'
-            ? result.reason
-            : result.value.error;
-          this.logger.error(
-            `Failed to send to ${batch[j].email}: ${error}`,
-          );
+    const { sentCount, failCount } = await this.emailService.sendInBatches(
+      subscribers,
+      newsletter,
+      (email, success, error) => {
+        if (!success) {
+          this.logger.error(`Failed to send to ${email}: ${error}`);
         }
-      }
-
-      // Small delay between batches to avoid rate limiting
-      if (i + batchSize < subscribers.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-    }
+      },
+    );
 
     newsletter.status = NewsletterStatus.SENT;
     newsletter.sentAt = new Date();

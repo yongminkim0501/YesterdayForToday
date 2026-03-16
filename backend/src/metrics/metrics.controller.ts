@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, ForbiddenException, Query } from '@nestjs/common';
+import { Controller, Get, Req, Res, ForbiddenException, Headers } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { MetricsService } from './metrics.service';
@@ -12,11 +12,12 @@ export class MetricsController {
   async getMetrics(
     @Req() req: Request,
     @Res() res: Response,
-    @Query('token') token?: string,
+    @Headers('authorization') authHeader?: string,
   ) {
     const metricsToken = process.env.METRICS_TOKEN;
     if (metricsToken) {
-      // Token-based auth: require matching token
+      // Token-based auth via Authorization: Bearer <token>
+      const token = authHeader?.replace(/^Bearer\s+/i, '');
       if (token !== metricsToken) {
         throw new ForbiddenException('Invalid or missing metrics token.');
       }

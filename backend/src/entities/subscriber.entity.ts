@@ -29,6 +29,9 @@ export class Subscriber {
   @Column({ default: 0 })
   lastSentNewsletterIndex: number;
 
+  @Column({ type: 'timestamp', nullable: true })
+  unsubscribedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

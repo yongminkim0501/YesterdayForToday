@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThanOrEqual } from 'typeorm';
 import { Subscriber } from '../entities/subscriber.entity';
 import { EmailService } from '../email/email.service';
 import { MetricsService } from '../metrics/metrics.service';
@@ -27,6 +27,7 @@ export class SubscribersService {
       existing.isActive = true;
       existing.isVerified = false;
       existing.verificationToken = uuidv4();
+      existing.unsubscribedAt = null;
       const saved = await this.subscriberRepo.save(existing);
       await this.trySendVerificationEmail(saved);
       return saved;
@@ -53,8 +54,7 @@ export class SubscribersService {
   }
 
   private async sendVerificationEmail(subscriber: Subscriber): Promise<void> {
-    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
-    const verifyUrl = `${frontendUrl}/verify?token=${subscriber.verificationToken}`;
+    const verifyUrl = `${this.emailService.frontendUrl}/verify?token=${subscriber.verificationToken}`;
 
     const html = `
 <!DOCTYPE html>
@@ -130,6 +130,7 @@ export class SubscribersService {
       throw new NotFoundException('유효하지 않은 구독 해지 토큰입니다.');
     }
     subscriber.isActive = false;
+    subscriber.unsubscribedAt = new Date();
     await this.subscriberRepo.save(subscriber);
     this.metricsService.unsubscriptions.inc();
   }
@@ -144,8 +145,12 @@ export class SubscribersService {
     return { valid: true, email: subscriber.email };
   }
 
-  async findAll(): Promise<Subscriber[]> {
-    return this.subscriberRepo.find({ order: { createdAt: 'DESC' } });
+  async findAll() {
+    const subscribers = await this.subscriberRepo.find({ order: { createdAt: 'DESC' } });
+    return subscribers.map((s) => ({
+      ...s,
+      status: !s.isActive ? 'unsubscribed' : !s.isVerified ? 'pending' : 'active',
+    }));
   }
 
   async findActive(): Promise<Subscriber[]> {
@@ -197,6 +202,23 @@ export class SubscribersService {
       .map((s) => `${s.id},${this.escapeCsvField(s.email)},${s.isActive},${s.isVerified},${s.createdAt.toISOString()}`)
       .join('\n');
     return header + rows;
+  }
+
+  async removeExpiredUnsubscribed(): Promise<number> {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const expired = await this.subscriberRepo.find({
+      where: {
+        isActive: false,
+        unsubscribedAt: LessThanOrEqual(sixMonthsAgo),
+      },
+    });
+
+    if (expired.length > 0) {
+      await this.subscriberRepo.remove(expired);
+    }
+    return expired.length;
   }
 
   async getStats(): Promise<{ total: number; active: number; inactive: number; unverified: number }> {
