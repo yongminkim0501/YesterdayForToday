@@ -11,14 +11,6 @@ export interface Newsletter {
   updatedAt?: string;
   status?: string;
   postIds?: number[];
-  /** @deprecated Use createdAt */
-  created_at?: string;
-  /** @deprecated Use publishedAt */
-  published_at?: string;
-  /** @deprecated Use updatedAt */
-  updated_at?: string;
-  /** @deprecated Use postIds */
-  post_ids?: number[];
 }
 
 // Admin endpoints

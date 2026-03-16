@@ -8,6 +8,7 @@ import {
 import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import Pagination from '../../components/common/Pagination';
+import { formatDate } from '../../utils/date';
 import './AdminSubscribersPage.css';
 
 interface Subscriber {
@@ -15,8 +16,6 @@ interface Subscriber {
   email: string;
   createdAt: string;
   status?: string;
-  /** @deprecated Use createdAt */
-  created_at?: string;
 }
 
 const AdminSubscribersPage: React.FC = () => {
@@ -33,7 +32,7 @@ const AdminSubscribersPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const params: any = { page, limit: 20 };
+      const params: { page: number; limit: number; keyword?: string } = { page, limit: 20 };
       if (keyword) params.keyword = keyword;
       const res = await getSubscribers(params);
       const data = res.data;
@@ -92,10 +91,6 @@ const AdminSubscribersPage: React.FC = () => {
     } catch {
       alert('내보내기에 실패했습니다.');
     }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('ko-KR');
   };
 
   return (
@@ -157,10 +152,10 @@ const AdminSubscribersPage: React.FC = () => {
                       <td>{sub.email}</td>
                       <td>
                         <span className={`status-badge status-${sub.status || 'active'}`}>
-                          {sub.status === 'unsubscribed' ? '구독 취소' : '활성'}
+                          {sub.status === 'unsubscribed' ? '구독 취소' : sub.status === 'pending' ? '인증 대기' : '활성'}
                         </span>
                       </td>
-                      <td>{formatDate(sub.createdAt || sub.created_at || '')}</td>
+                      <td>{formatDate(sub.createdAt)}</td>
                       <td>
                         <button
                           className="btn btn-danger btn-sm"

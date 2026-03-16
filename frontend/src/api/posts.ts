@@ -9,12 +9,6 @@ export interface Post {
   company?: string;
   createdAt: string;
   updatedAt?: string;
-  /** @deprecated Use sourceUrl */
-  source_url?: string;
-  /** @deprecated Use createdAt */
-  created_at?: string;
-  /** @deprecated Use updatedAt */
-  updated_at?: string;
 }
 
 export const getPosts = (params?: { page?: number; limit?: number; keyword?: string }) =>

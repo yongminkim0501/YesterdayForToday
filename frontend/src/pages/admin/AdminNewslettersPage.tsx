@@ -9,6 +9,7 @@ import {
 import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import Pagination from '../../components/common/Pagination';
+import { formatDate } from '../../utils/date';
 import './AdminNewslettersPage.css';
 
 const AdminNewslettersPage: React.FC = () => {
@@ -57,10 +58,6 @@ const AdminNewslettersPage: React.FC = () => {
     } catch {
       alert('발송에 실패했습니다.');
     }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('ko-KR');
   };
 
   const statusLabel = (status?: string) => {
@@ -112,7 +109,7 @@ const AdminNewslettersPage: React.FC = () => {
                           {statusLabel(nl.status)}
                         </span>
                       </td>
-                      <td>{formatDate(nl.createdAt || nl.created_at || '')}</td>
+                      <td>{formatDate(nl.createdAt)}</td>
                       <td>
                         <div className="admin-table-actions">
                           <Link

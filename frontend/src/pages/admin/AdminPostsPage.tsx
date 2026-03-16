@@ -3,6 +3,7 @@ import { getPosts, createPost, updatePost, deletePost, Post } from '../../api/po
 import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import Pagination from '../../components/common/Pagination';
+import { formatDate } from '../../utils/date';
 import './AdminPostsPage.css';
 
 const COMPANIES = ['Meta', 'Netflix', 'Amazon', 'Google', 'Apple', 'Uber', 'LinkedIn', 'Spotify'];
@@ -59,7 +60,7 @@ const AdminPostsPage: React.FC = () => {
       title: post.title,
       content: post.content,
       summary: post.summary || '',
-      sourceUrl: post.sourceUrl || post.source_url || '',
+      sourceUrl: post.sourceUrl || '',
       company: post.company || '',
     });
     setEditingId(post.id);
@@ -99,10 +100,6 @@ const AdminPostsPage: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('ko-KR');
   };
 
   return (
@@ -211,7 +208,7 @@ const AdminPostsPage: React.FC = () => {
                       <td>
                         {post.company && <span className="badge">{post.company}</span>}
                       </td>
-                      <td>{formatDate(post.createdAt || post.created_at || '')}</td>
+                      <td>{formatDate(post.createdAt)}</td>
                       <td>
                         <div className="admin-table-actions">
                           <button className="btn btn-outline btn-sm" onClick={() => openEdit(post)}>

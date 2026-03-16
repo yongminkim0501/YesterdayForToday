@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AxiosError } from 'axios';
 import { subscribe } from '../../api/subscribers';
 import './SubscriptionForm.css';
 
@@ -66,9 +67,10 @@ const SubscriptionForm = React.forwardRef<HTMLDivElement>((_, ref) => {
       setMessage('');
       setEmail('');
       startCooldown();
-    } catch (error: any) {
+    } catch (error) {
       setStatus('error');
-      const msg = error.response?.data?.message || '구독 신청 중 오류가 발생했습니다. 다시 시도해 주세요.';
+      const axiosErr = error as AxiosError<{ message?: string }>;
+      const msg = axiosErr.response?.data?.message || '구독 신청 중 오류가 발생했습니다. 다시 시도해 주세요.';
       setMessage(msg);
     }
   };
@@ -81,9 +83,10 @@ const SubscriptionForm = React.forwardRef<HTMLDivElement>((_, ref) => {
       setStatus('success');
       setMessage('인증 이메일을 다시 발송했습니다!');
       startCooldown();
-    } catch (error: any) {
+    } catch (error) {
       setStatus('error');
-      const msg = error.response?.data?.message || '재발송 중 오류가 발생했습니다.';
+      const axiosErr = error as AxiosError<{ message?: string }>;
+      const msg = axiosErr.response?.data?.message || '재발송 중 오류가 발생했습니다.';
       setMessage(msg);
     }
   };

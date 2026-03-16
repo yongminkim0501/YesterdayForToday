@@ -28,13 +28,3 @@
 .subscribers-add input:focus {
   border-color: var(--color-navy);
 }
-
-.status-active {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.status-unsubscribed {
-  background-color: var(--color-bg-gray);
-  color: var(--color-text-muted);
-}

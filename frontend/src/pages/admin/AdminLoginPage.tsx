@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AxiosError } from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import './AdminLoginPage.css';
 
@@ -23,8 +24,9 @@ const AdminLoginPage: React.FC = () => {
     try {
       await login({ username, password });
       navigate('/admin');
-    } catch (err: any) {
-      setError(err.response?.data?.message || '로그인에 실패했습니다.');
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ message?: string }>;
+      setError(axiosErr.response?.data?.message || '로그인에 실패했습니다.');
     } finally {
       setLoading(false);
     }
